@@ -1,2 +1,2 @@
 # learn
-Learning Next JS, React Hooks, Typescript and Tailwind CSS docs
+Hands-on work with Next JS, React Hooks, Typescript and Tailwind CSS docs
