@@ -4,6 +4,7 @@ export async function GET(
   _request: Request,
   { params }: { params: { id: string } }
 ) {
+  // this will  cause to redirect to comments page if the id not exist here.
   if (parseInt(params.id) > comments.length) {
     redirect("/comments");
   }
