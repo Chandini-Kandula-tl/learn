@@ -1,5 +1,7 @@
 // "use client";
 
+import Link from "next/link";
+
 // const { Text } = Typography;
 
 export default function Home() {
@@ -126,5 +128,11 @@ export default function Home() {
   //   //   </button>
   //   // </Space>
   // );
-  return <h1>Welcome Home!</h1>;
+  return (
+    <>
+      <h1>Welcome Home!</h1>
+      <Link href="/blog">Blog </Link>
+      <Link href="/products">Products</Link>
+    </>
+  );
 }

@@ -5,7 +5,7 @@ export default function AuthLayout({
 }) {
   return (
     <>
-      <h2>Inner Layout</h2>
+      {/* <h2>Inner Layout</h2> */}
       {children}
     </>
   );
