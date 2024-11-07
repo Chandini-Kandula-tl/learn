@@ -1,13 +1,21 @@
 "use client";
 
+import { useTheme } from "@/components/theme-provider";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick-theme.css";
 import "slick-carousel/slick/slick.css";
 
 export default function ClientRoutePage() {
-  // const theme = useTheme();
+  const theme = useTheme();
   return (
     <>
+      <h1
+        style={{
+          color: theme.colors.secondary,
+        }}
+      >
+        Server Route
+      </h1>
       <div className="image-slider-container">
         <Slider>
           <div>
