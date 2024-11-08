@@ -15,6 +15,7 @@ server.use((req, res, next) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept"
   );
+  res.header("Cache-Control", "public, max-age=10, s-maxage=10");
   next();
 });
 
