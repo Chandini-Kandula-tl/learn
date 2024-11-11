@@ -1,228 +1,89 @@
 "use client";
-import { Form, Input, InputRef, Popconfirm, Radio, Select, Space } from "antd";
-import { useRef, useState } from "react";
+import { Form, Input, InputRef, Radio, Select, Space } from "antd";
+import { useCallback, useRef, useState } from "react";
+import PopConfirmComponent, {
+  PopConfirmComponentProps,
+} from "../components/popConfirm";
+import { useAvailableSystems } from "../hooks/availableSystem";
+import { IPhase } from "../interfaces/interface";
 const { Item: FormItem } = Form;
 
-interface IPhase {
-  bomId: string;
-  value: string;
-}
-
-interface IAvailableSystems {
-  systemSize: number;
-  phases: IPhase[];
-}
-
-const availableSystems: IAvailableSystems[] = [
-  {
-    systemSize: 2.16,
-    phases: [
-      {
-        bomId: "6728c5dbfb27852403989e01",
-        value: "2.16",
-      },
-    ],
-  },
-  {
-    systemSize: 4.32,
-    phases: [
-      {
-        bomId: "6728c5dbfb27852403989e04",
-        value: "4.32",
-      },
-      {
-        bomId: "6728c5dbfb27852403989e05",
-        value: "4.32",
-      },
-    ],
-  },
-  {
-    systemSize: 6.48,
-    phases: [
-      {
-        bomId: "6728c5dbfb27852403989e08",
-        value: "6.48",
-      },
-      {
-        bomId: "6728c5dbfb27852403989e09",
-        value: "6.48",
-      },
-    ],
-  },
-  {
-    systemSize: 7.02,
-    phases: [
-      {
-        bomId: "6728c5dbfb27852403989e0a",
-        value: "7.02",
-      },
-    ],
-  },
-  {
-    systemSize: 5.4,
-    phases: [
-      {
-        bomId: "6728c5dbfb27852403989e06",
-        value: "5.4",
-      },
-      {
-        bomId: "6728c5dbfb27852403989e07",
-        value: "5.4",
-      },
-    ],
-  },
-  {
-    systemSize: 9.18,
-    phases: [
-      {
-        bomId: "6728c5dbfb27852403989e0c",
-        value: "9.18",
-      },
-    ],
-  },
-  {
-    systemSize: 10.26,
-    phases: [
-      {
-        bomId: "6728c5dbfb27852403989e0d",
-        value: "last",
-      },
-    ],
-  },
-  {
-    systemSize: 8.1,
-    phases: [
-      {
-        bomId: "6728c5dbfb27852403989e0b",
-        value: "8.1",
-      },
-    ],
-  },
-  {
-    systemSize: 1.08,
-    phases: [
-      {
-        bomId: "6728c5dbfb27852403989e00",
-        value: "first",
-      },
-    ],
-  },
-  {
-    systemSize: 3.24,
-    phases: [
-      {
-        bomId: "6728c5dbfb27852403989e02",
-        value: "3.24",
-      },
-      {
-        bomId: "6728c5dbfb27852403989e03",
-        value: "3.24",
-      },
-    ],
-  },
-];
-
 const Page = () => {
+  const [form] = Form.useForm();
   const inputRef = useRef<InputRef>(null);
+  const { availableSystems, minMaxCheck } = useAvailableSystems();
   const [selectOptions, setSelectOptions] = useState<IPhase[]>([]);
   const [confirmationPopUp, setConfirmationPopoup] = useState<boolean>(false);
-  const [isFirstFocus, setIsFirstFocus] = useState<boolean>(true);
-  const minSystemSize = Math.min(
-    ...availableSystems.map((sys) => sys.systemSize)
-  );
-  const maxSystemSize = Math.max(
-    ...availableSystems.map((sys) => sys.systemSize)
-  );
+  // const [confirmationMessage, setConfirmationMessage] = useState<string>("");
+  const [pendingSystemSize, setPendingSystemSize] = useState<string>("");
+  const [type, setType] = useState<PopConfirmComponentProps["type"]>("minimum");
+  const options = useRef<IPhase[]>([]);
 
-  const [confirmationMessage, setConfirmationMessage] = useState<string>("");
-  const [pendingSystemSize, setPendingSystemSize] = useState<string | "">("");
-  const [inputValue, setInputValue] = useState<string>("");
-
-  const hanldeInputClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (isFirstFocus) {
-      setConfirmationPopoup(true);
-    } else {
-      inputRef.current?.focus();
-    }
-  };
-
-  const handleInputFocus = () => {
-    if (isFirstFocus) {
-      //   setConfirmationPopoup(true);
-      setIsFirstFocus(false);
-    }
-  };
-
-  const confirm = () => {
+  const confirm = useCallback(() => {
     if (pendingSystemSize.length !== 0) {
-      setInputValue(pendingSystemSize.toString());
-      setConfirmationPopoup(false);
+      form.setFieldsValue({ systemSize: pendingSystemSize });
+      setSelectOptions(options.current);
+      options.current = [];
+      setPendingSystemSize("");
       inputRef.current?.blur();
     } else {
-      inputRef.current?.focus();
-      setConfirmationPopoup(false);
+      if (form.getFieldValue("phaseSize")) {
+        form.setFieldsValue({ phaseSize: "" });
+        inputRef.current?.focus();
+        setSelectOptions([]);
+      }
     }
-  };
-
-  const cancel = () => {
-    inputRef.current?.focus();
     setConfirmationPopoup(false);
-    setInputValue("");
-  };
+  }, [form, pendingSystemSize]);
+
+  const cancel = useCallback(() => {
+    if (form.getFieldValue("phaseSize")) {
+      inputRef.current?.blur();
+    } else {
+      form.setFieldsValue({ systemSize: "" });
+      inputRef.current?.focus();
+    }
+    setConfirmationPopoup(false);
+  }, [form]);
 
   const validateInput = (value: string) => {
     const inputValue = parseFloat(value);
     if (isNaN(inputValue)) return;
-    if (inputValue < minSystemSize) {
-      setPendingSystemSize(minSystemSize.toString());
+    const {
+      confirmationPopup,
+      // confirmationMessage,
+      pendingSystemSize,
+      phases,
+      type,
+    } = minMaxCheck(inputValue);
+    console.log(typeof type);
+    if (confirmationPopup) {
+      setPendingSystemSize(pendingSystemSize);
       setConfirmationPopoup(true);
-      setConfirmationMessage(
-        "Entered system size is too low. Do you want to replace it with the minimum available size?"
-      );
-    }
-    if (inputValue > maxSystemSize) {
-      setPendingSystemSize(maxSystemSize.toString());
-      setConfirmationPopoup(true);
-      setConfirmationMessage(
-        "Entered system size is too high. Do you want to replace it with the maximum available size?"
-      );
-    }
-    const exactMatch = availableSystems.find(
-      (system) => system.systemSize === inputValue
-    );
-    if (exactMatch) {
-      setSelectOptions(exactMatch.phases);
-    }
-    // else {
-    //   let closestMatch = availableSystems[0];
-    //   let smallestDifference = Math.abs(
-    //     availableSystems[0].systemSize - inputValue
-    //   );
-    //   for (let i = 1; i < availableSystems.length; i++) {
-    //     const currentSystem = availableSystems[i];
-    //     const difference = Math.abs(currentSystem.systemSize - inputValue);
-
-    //     if (difference < smallestDifference) {
-    //       closestMatch = currentSystem;
-    //       smallestDifference = difference;
-    //     }
-    //   }
-
-    //   setSelectOptions(closestMatch.phases);
-    // }
-    else {
+      setType(type);
+      // setConfirmationMessage(confirmationMessage);
+      // setSelectOptions(phases);
+      options.current = phases;
+    } else {
       const closestMatch = availableSystems.reduce((prev, curr) => {
         return Math.abs(curr.systemSize - inputValue) <
           Math.abs(prev.systemSize - inputValue)
           ? curr
           : prev;
       });
-
+      form.setFieldsValue({ systemSize: closestMatch.systemSize });
       setSelectOptions(closestMatch.phases);
     }
   };
-  // };
+
+  const handleInputClick = (e: React.MouseEvent) => {
+    if (form.getFieldValue("phaseSize")) {
+      e.preventDefault();
+      setConfirmationPopoup(true);
+      setType("update");
+      // setConfirmationMessage("");
+    }
+  };
 
   const handleInput = () => {
     setSelectOptions([]);
@@ -231,36 +92,36 @@ const Page = () => {
     }
   };
 
+  // const description = useMemo(() => {
+  //   return confirmationMessage.length === 0
+  //     ? "Updating system size will change the phase!! Are you sure?"
+  //     : confirmationMessage;
+  // }, [confirmationMessage]);
+
   return (
-    <Form layout="vertical">
-      <FormItem label="System size" name="systemSize">
-        <Popconfirm
-          title="Confirmatin of system size requirement"
-          description={
-            confirmationMessage.length === 0
-              ? "Updating system size will change the phase!! Are you sure?"
-              : confirmationMessage
-          }
-          okText="Yes"
-          cancelText="NO"
-          open={confirmationPopUp}
-          onConfirm={confirm}
-          onCancel={cancel}
-        >
+    <Form
+      form={form}
+      // initialValues={{ systemSize: 1.2345 }}
+      layout="vertical"
+    >
+      {/* <Popconfirm
+        title="Confirmatin of system size requirement"
+        description={description}
+        okText="Yes"
+        cancelText="NO"
+        open={confirmationPopUp}
+        onConfirm={confirm}
+        onCancel={cancel}
+      >
+        <FormItem label="System size" name="systemSize">
           <Input
             type="number"
             ref={inputRef}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onMouseDown={hanldeInputClick}
-            onFocus={handleInputFocus}
+            onMouseDown={handleInputClick}
             onBlur={handleInput}
           />
-        </Popconfirm>
-      </FormItem>
-      <FormItem label="Phase size" name="phaseSize">
-        <Select options={selectOptions} />
-      </FormItem>
+        </FormItem>
+      </Popconfirm> */}
       <Space>
         <FormItem label="Roof Type" name={"flatRoof"}>
           <Radio>Flat Roof</Radio>
@@ -275,6 +136,38 @@ const Page = () => {
       <FormItem label="Site under construction">
         <Select options={selectOptions} />
       </FormItem>
+      <PopConfirmComponent
+        type={type}
+        onConfirm={confirm}
+        onCancel={cancel}
+        open={confirmationPopUp}
+      >
+        <FormItem label="System size" name="systemSize">
+          <Input
+            type="number"
+            ref={inputRef}
+            onMouseDown={handleInputClick}
+            onBlur={handleInput}
+          />
+        </FormItem>
+      </PopConfirmComponent>
+      <FormItem label="Phase size" name="phaseSize">
+        <Select className="lg:w-96 md:40" options={selectOptions} />
+      </FormItem>
+      <ol>
+        {availableSystems
+          .sort((a, b) => a.systemSize - b.systemSize)
+          .map(({ systemSize, phases }, index) => {
+            return (
+              <li key={index}>
+                System Size: {systemSize}
+                <br />
+                Phases: {phases.map(({ value }) => value).join(", ")}
+                <hr />
+              </li>
+            );
+          })}
+      </ol>
     </Form>
   );
 };
