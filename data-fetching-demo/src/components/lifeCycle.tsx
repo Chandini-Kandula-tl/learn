@@ -1,5 +1,5 @@
 "use client";
-
+// react life cycle
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useState } from "react";
 
